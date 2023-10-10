@@ -1,6 +1,6 @@
 import re
 class Course:
-    def __init__(self, code, name, credits,lecture_hours,lab_hours,tutorial_hours, other_hours, lecture_schedule_type, other_hours_schedule_type, description, prerequisites, notes):
+    def __init__(self, code, name, credits,lecture_hours,lab_hours,tutorial_hours, other_hours, lecture_schedule_type, other_hours_schedule_type, description,coANDprerequisites, prerequisites, corequisites, notes):
         self.code = code
         self.name = name
         self.credits = credits
@@ -11,14 +11,16 @@ class Course:
         self.other_hours_schedule_type = other_hours_schedule_type
         self.lecture_schedule_type = lecture_schedule_type
         self.description = description
+        self.coANDprerequisites = coANDprerequisites
         self.prerequisites = prerequisites
+        self.corequisites = corequisites
         self.notes = notes
 
     def __repr__(self):
         return f"{self.code} - {self.name}\nCredits: {self.credits}\n"\
                f"Lecture Hours: {self.lecture_hours}\nLab Hours: {self.lab_hours}\nTutorial Hours: {self.tutorial_hours}\n"\
                f"Other Hours: {self.other_hours}\nLecture Type: {self.lecture_schedule_type}\nOther Hours Type: {self.other_hours_schedule_type}\n" \
-               f"Description: {self.description}\nPrerequisites: {self.prerequisites}\nNotes: {self.notes}"
+               f"Description: {self.description}\nPrerequisite(s)/Corequisite(s): {self.coANDprerequisites}\nPrerequisites: {self.prerequisites}\nCorequisites: {self.corequisites}\nNotes: {self.notes}"
 
 with open('courseDescriptions.txt', 'r', encoding='utf-8') as file:
     text = file.read()
@@ -40,9 +42,13 @@ other_hours_pattern = re.compile(r'Other Hour\(s\): (\d+)')
 lecture_schedule_type_pattern = re.compile(r'(?<=Lecture Hours Schedule Type: ).*')
 other_hours_schedule_type_pattern = re.compile(r'Other Hours Schedule Type: ([\w\s,]+)')
 prerequisite_pattern = re.compile(r'(?<=Prerequisite\(s\): ).*')
+corequisite_pattern = re.compile(r'(?<=Corequisite\(s\): ).*')
 note_pattern = re.compile(r'Note: (.+)')
 lecture_schedule_type_remove_pattern = re.compile(r'Lecture Hours Schedule Type: .*')
 prerequisite_remove_pattern = re.compile(r'Prerequisite\(s\): .*')
+corequisite_remove_pattern = re.compile(r'Corequisite\(s\): .*')
+preANDcorequisite_pattern = re.compile(r'(?<=Prerequisite\(s\)/Corequisite\(s\): ).*')
+preANDcorequisite_remove_pattern = re.compile(r'Prerequisite\(s\)/Corequisite\(s\): .*')
 
 # Parse each course text and create Course object
 for course_text in course_texts:
@@ -102,12 +108,27 @@ for course_text in course_texts:
     # Remove matched schedule_type pattern from course_text
     course_text = re.sub(other_hours_schedule_type_pattern, '', course_text) if other_hours_schedule_type_match else course_text
 
+    coANDprerequisite_match = preANDcorequisite_pattern.search(course_text)
+    coANDprerequisites = coANDprerequisite_match.group(0) if coANDprerequisite_match else None
+
+    # Remove matched coANDprerequisite pattern from course_text
+    course_text = re.sub(preANDcorequisite_pattern, '', course_text) if coANDprerequisite_match else course_text
+    course_text = re.sub(preANDcorequisite_remove_pattern, '', course_text)
+
+
     prerequisite_match = prerequisite_pattern.search(course_text)
     prerequisites = prerequisite_match.group(0) if prerequisite_match else None
 
     # Remove matched prerequisite pattern from course_text
     course_text = re.sub(prerequisite_pattern, '', course_text) if prerequisite_match else course_text
     course_text = re.sub(prerequisite_remove_pattern, '', course_text)
+
+    corequisite_match = corequisite_pattern.search(course_text)
+    corequisites = corequisite_match.group(0) if corequisite_match else None
+
+    # Remove matched corequisite pattern from course_text
+    course_text = re.sub(corequisite_pattern, '', course_text) if corequisite_match else course_text
+    course_text = re.sub(corequisite_remove_pattern, '', course_text)
     
     note_match = note_pattern.search(course_text)
     notes = note_match.group(1) if note_match else None
@@ -119,7 +140,7 @@ for course_text in course_texts:
 
 
     # Create and store Course object
-    courses.append(Course(code, name, credits, lecture_hours, lab_hours, tutorial_hours, other_hours, lecture_schedule_type, other_hours_schedule_type, description, prerequisites, notes))
+    courses.append(Course(code, name, credits, lecture_hours, lab_hours, tutorial_hours, other_hours, lecture_schedule_type, other_hours_schedule_type, description, coANDprerequisites,prerequisites, corequisites, notes))
 
 # Print out Course objects
 with open('courseList.txt', 'w', encoding='utf-8') as f:    
